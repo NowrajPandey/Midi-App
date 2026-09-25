@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { MidiConnectionState, MidiDeviceInfo, MidiOutMessageLog, Patch } from './types';
-import { deviceProfiles } from './data/xp30';
+import { deviceProfiles, describePatchOrigin } from './data/xp30';
 import { DispatchContext, StateContext, useRootStore } from './state/store';
 import { midiBridge, buildMonitorEntry } from './midi/MidiBridge';
 import { ConnectionStatus } from './components/ConnectionStatus';
@@ -68,10 +68,20 @@ export default function App() {
       sendProgramChange: state.midiSettings.sendProgramChange,
     });
     if (res.ok) {
+      const bankLabel = describePatchOrigin(patch.origin);
       setMonitorLog((log) =>
-        [...log, buildMonitorEntry(res.raw, patch.values.channel, patch.values.bankMSB, patch.values.bankLSB, patch.values.program)].slice(
-          -100
-        )
+        [
+          ...log,
+          buildMonitorEntry(
+            res.raw,
+            patch.name,
+            bankLabel,
+            patch.values.channel,
+            patch.values.bankMSB,
+            patch.values.bankLSB,
+            patch.values.program
+          ),
+        ].slice(-100)
       );
     }
   };

@@ -107,6 +107,8 @@ export const midiBridge = {
 
 export function buildMonitorEntry(
   raw: string[],
+  patchName: string,
+  bankLabel: string,
   channel: number,
   bankMSB: number | null,
   bankLSB: number | null,
@@ -115,6 +117,8 @@ export function buildMonitorEntry(
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     at: Date.now(),
+    patchName,
+    bankLabel,
     channel,
     bankMSB,
     bankLSB,

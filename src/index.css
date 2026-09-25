@@ -273,10 +273,11 @@ button {
 .switch .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.15s ease; }
 .switch.on .knob { transform: translateX(20px); }
 
-.grid-columns-picker { display: flex; gap: 8px; }
+.grid-columns-picker { display: flex; gap: 6px; flex-wrap: wrap; }
 .grid-columns-picker button {
-  flex: 1;
-  padding: 10px;
+  flex: 1 1 18%;
+  min-width: 34px;
+  padding: 10px 6px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-elevated-2);
@@ -288,4 +289,28 @@ button {
 
 @media (prefers-color-scheme: light) {
   /* App is intentionally dark-first per spec §25; kept dark even in light mode. */
+}
+
+/* --- polish pass --- */
+.sheet { box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45); }
+.pad {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.pad.active {
+  box-shadow:
+    0 0 0 1px var(--pad-accent, var(--accent-blue)) inset,
+    0 8px 20px color-mix(in srgb, var(--pad-accent, var(--accent-blue)) 30%, transparent);
+}
+.btn.primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-blue) 92%, white), var(--accent-blue));
+}
+.page-tab.active {
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-blue) 40%, transparent);
+}
+.app-credit {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  padding: 18px 0 4px;
 }

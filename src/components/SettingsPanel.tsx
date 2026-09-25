@@ -67,6 +67,7 @@ export function SettingsPanel({
             Done
           </button>
         </div>
+        <p className="app-credit">MIDI Patch — made by Nowraj Pandey</p>
       </div>
     </div>
   );

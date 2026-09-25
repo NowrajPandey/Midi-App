@@ -1,6 +1,6 @@
 import type { GridColumns } from '../types';
 
-const OPTIONS: GridColumns[] = [2, 3, 4, 5, 6];
+const OPTIONS: GridColumns[] = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export function GridSizeControl({
   label,

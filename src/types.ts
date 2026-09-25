@@ -44,7 +44,7 @@ export interface Page {
   patchIds: string[]; // ordered
 }
 
-export type GridColumns = 2 | 3 | 4 | 5 | 6;
+export type GridColumns = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export interface GridPreferences {
   portraitColumns: GridColumns;
@@ -70,9 +70,12 @@ export interface AppState {
 
 // ---- Device profiles (built-in libraries like the XP-30) -------------
 
+export type DeviceBankKind = 'user' | 'preset' | 'expansion';
+
 export interface DeviceBank {
   id: string;
   name: string; // "PR-A", "USER", "XP-A", ...
+  kind: DeviceBankKind; // drives "User Tone" / "Preset Tone" / "Expansion Tone" in messages
   bankMSB: number | null;
   bankLSB: number | null;
   programCount: number; // how many patches (1..programCount) live in this bank
@@ -100,6 +103,8 @@ export interface DeviceProfile {
 export interface MidiOutMessageLog {
   id: string;
   at: number;
+  patchName: string;
+  bankLabel: string; // e.g. "User Tone 056" or "Preset Tone · PR-B 042"
   channel: number;
   bankMSB: number | null;
   bankLSB: number | null;

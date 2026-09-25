@@ -1,4 +1,4 @@
-import type { DeviceProfile } from '../types';
+import type { DeviceBank, DeviceProfile } from '../types';
 
 /**
  * Roland XP-30 device profile.
@@ -32,17 +32,17 @@ export const rolandXP30: DeviceProfile = {
   defaultChannel: 1,
   verified: false,
   banks: [
-    { id: 'user', name: 'USER', bankMSB: 80, bankLSB: 0, programCount: 64 },
-    { id: 'pr-a', name: 'PR-A', bankMSB: 81, bankLSB: 0, programCount: 64 },
-    { id: 'pr-b', name: 'PR-B', bankMSB: 81, bankLSB: 1, programCount: 64 },
-    { id: 'pr-c', name: 'PR-C', bankMSB: 81, bankLSB: 2, programCount: 64 },
-    { id: 'pr-d', name: 'PR-D', bankMSB: 81, bankLSB: 3, programCount: 64 },
-    { id: 'pr-e', name: 'PR-E', bankMSB: 81, bankLSB: 4, programCount: 64 },
-    { id: 'xp-a', name: 'XP-A', bankMSB: 84, bankLSB: 0, programCount: 64 },
-    { id: 'xp-b', name: 'XP-B', bankMSB: 84, bankLSB: 1, programCount: 64 },
-    { id: 'xp-c', name: 'XP-C', bankMSB: 84, bankLSB: 2, programCount: 64 },
-    { id: 'xp-d', name: 'XP-D', bankMSB: 84, bankLSB: 3, programCount: 64 },
-    { id: 'xp-e', name: 'XP-E', bankMSB: 84, bankLSB: 4, programCount: 64 },
+    { id: 'user', name: 'USER', kind: 'user', bankMSB: 80, bankLSB: 0, programCount: 64 },
+    { id: 'pr-a', name: 'PR-A', kind: 'preset', bankMSB: 81, bankLSB: 0, programCount: 64 },
+    { id: 'pr-b', name: 'PR-B', kind: 'preset', bankMSB: 81, bankLSB: 1, programCount: 64 },
+    { id: 'pr-c', name: 'PR-C', kind: 'preset', bankMSB: 81, bankLSB: 2, programCount: 64 },
+    { id: 'pr-d', name: 'PR-D', kind: 'preset', bankMSB: 81, bankLSB: 3, programCount: 64 },
+    { id: 'pr-e', name: 'PR-E', kind: 'preset', bankMSB: 81, bankLSB: 4, programCount: 64 },
+    { id: 'xp-a', name: 'XP-A', kind: 'expansion', bankMSB: 84, bankLSB: 0, programCount: 64 },
+    { id: 'xp-b', name: 'XP-B', kind: 'expansion', bankMSB: 84, bankLSB: 1, programCount: 64 },
+    { id: 'xp-c', name: 'XP-C', kind: 'expansion', bankMSB: 84, bankLSB: 2, programCount: 64 },
+    { id: 'xp-d', name: 'XP-D', kind: 'expansion', bankMSB: 84, bankLSB: 3, programCount: 64 },
+    { id: 'xp-e', name: 'XP-E', kind: 'expansion', bankMSB: 84, bankLSB: 4, programCount: 64 },
   ],
 };
 
@@ -59,3 +59,44 @@ export const deviceProfiles: Record<string, DeviceProfile> = {
   [rolandXP30.id]: rolandXP30,
   [genericProfile.id]: genericProfile,
 };
+
+/** Turns a bank's kind into the exact word used in every message, so two
+ * patches that share a display name (e.g. both renamed "Piano") never get
+ * confused about whether they're a factory Preset, a User tone, or an
+ * Expansion board tone — this label always goes in front of the number. */
+export function bankKindLabel(kind: DeviceBank['kind']): string {
+  switch (kind) {
+    case 'user':
+      return 'User Tone';
+    case 'preset':
+      return 'Preset Tone';
+    case 'expansion':
+      return 'Expansion Tone';
+    default:
+      return 'Tone';
+  }
+}
+
+/** Pads a program number to a fixed width, e.g. 56 -> "056", matching how
+ * the XP-30's own panel numbers its patches. */
+export function formatProgramNumber(program: number, digits = 3): string {
+  return String(program).padStart(digits, '0');
+}
+
+/** Builds the single unambiguous "what tone is this exactly" string used
+ * in Test Patch results and the MIDI Monitor. Two differently-sourced
+ * patches that end up with the same display name will still show a
+ * different bankLabel here, because it's built from the original bank +
+ * program, not from the (editable) patch name. */
+export function describePatchOrigin(
+  origin: { type: 'custom' } | { type: 'device-library'; deviceId: string; bankId: string; program: number }
+): string {
+  if (origin.type === 'device-library') {
+    const device = deviceProfiles[origin.deviceId];
+    const bank = device?.banks.find((b) => b.id === origin.bankId);
+    if (bank) {
+      return `${bankKindLabel(bank.kind)} · ${bank.name} ${formatProgramNumber(origin.program)}`;
+    }
+  }
+  return 'Custom Patch';
+}

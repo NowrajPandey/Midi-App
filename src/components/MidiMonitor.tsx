@@ -12,6 +12,9 @@ export function MidiMonitor({ log, onClose }: { log: MidiOutMessageLog[]; onClos
             .reverse()
             .map((entry) => (
               <div className="monitor-entry" key={entry.id}>
+                <div style={{ fontWeight: 700 }}>
+                  {entry.patchName} — {entry.bankLabel}
+                </div>
                 <div>
                   CH {entry.channel} · Bank {entry.bankMSB ?? '—'}/{entry.bankLSB ?? '—'} · PC {entry.program}
                 </div>

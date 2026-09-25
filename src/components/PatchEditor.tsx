@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PadAccentColor, Patch } from '../types';
 import { midiBridge } from '../midi/MidiBridge';
+import { describePatchOrigin } from '../data/xp30';
 
 const COLORS: PadAccentColor[] = ['blue', 'green', 'orange', 'purple', 'red', 'teal', 'yellow', 'gray'];
 const ICONS = ['🎹', '🎺', '🎻', '🥁', '🎸', '🎤', '🔔', '🌊', '✨', '🎛️'];
@@ -39,7 +40,11 @@ export function PatchEditor({
       sendBankSelect: midiSettings.sendBankSelect,
       sendProgramChange: midiSettings.sendProgramChange,
     });
-    setTestResult(res.ok ? `Sent: ${res.raw.join(' | ')}` : 'No MIDI device connected');
+    const identity = describePatchOrigin(form.origin);
+    const location = `CH ${form.values.channel} · Bank ${form.values.bankMSB ?? '—'}/${form.values.bankLSB ?? '—'} · PC ${form.values.program}`;
+    setTestResult(
+      res.ok ? `Sent — ${identity} (${location})\n${res.raw.join('  ')}` : 'No MIDI device connected'
+    );
   };
 
   return (
@@ -142,7 +147,11 @@ export function PatchEditor({
         <button className="btn" onClick={test}>
           TEST PATCH
         </button>
-        {testResult && <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8 }}>{testResult}</p>}
+        {testResult && (
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8, whiteSpace: 'pre-line' }}>
+            {testResult}
+          </p>
+        )}
 
         <div className="btn-row">
           <button className="btn ghost" onClick={onCancel}>

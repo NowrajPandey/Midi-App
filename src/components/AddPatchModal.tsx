@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { DeviceBank, DeviceProfile, Patch } from '../types';
 import { newPatchTemplate } from '../state/store';
+import { bankKindLabel, formatProgramNumber } from '../data/xp30';
 
 type Step = 'choose' | 'bank' | 'program';
 
@@ -35,16 +36,20 @@ export function AddPatchModal({
   const pickProgram = (program: number) => {
     if (!bank) return;
     const draft = newPatchTemplate();
+    const padded = formatProgramNumber(program);
     onDraftReady({
       ...draft,
-      name: `${bank.name} ${program}`,
+      name: `${bank.name} ${padded}`,
       values: {
         channel: deviceProfile.defaultChannel,
         bankMSB: bank.bankMSB,
         bankLSB: bank.bankLSB,
         program,
       },
-      appearance: { ...draft.appearance, subtitle: `${bank.name} · ${program}` },
+      appearance: {
+        ...draft.appearance,
+        subtitle: `${bankKindLabel(bank.kind)} · ${bank.name} ${padded}`,
+      },
       origin: { type: 'device-library', deviceId: deviceProfile.id, bankId: bank.id, program },
     });
   };
@@ -79,7 +84,7 @@ export function AddPatchModal({
             <div className="choice-list">
               {deviceProfile.banks.map((b) => (
                 <button key={b.id} onClick={() => pickBank(b)}>
-                  {b.name}
+                  {b.name} — {bankKindLabel(b.kind)}
                   <span className="desc">
                     MSB {b.bankMSB ?? '—'} · LSB {b.bankLSB ?? '—'} · {b.programCount} patches
                   </span>
@@ -116,17 +121,25 @@ function ProgramPicker({
 
   return (
     <>
-      <h2>{bank.name} — Patch number</h2>
+      <h2>
+        {bank.name} — {bankKindLabel(bank.kind)}
+      </h2>
       <div className="field">
-        <label>Program (1–{bank.programCount})</label>
+        <label>Exact program number (1–{bank.programCount})</label>
         <input
           type="number"
           min={1}
           max={bank.programCount}
           value={value}
+          placeholder="e.g. 56"
           onChange={(e) => setValue(e.target.value)}
         />
       </div>
+      <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: -6, marginBottom: 14 }}>
+        This will be saved as <strong>{bankKindLabel(bank.kind)} · {bank.name} {formatProgramNumber(n)}</strong> —
+        that exact wording is what you'll see in Test Patch and the MIDI Monitor, so it never gets
+        confused with a different bank's tone.
+      </p>
       <div className="btn-row">
         <button className="btn ghost" onClick={onBack}>
           Back
