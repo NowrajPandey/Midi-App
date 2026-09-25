@@ -81,8 +81,8 @@ class MidiPlugin : Plugin() {
     }
 
     private fun isUsbMidiDevice(info: MidiDeviceInfo): Boolean =
-        info.properties.getInt(MidiDeviceInfo.PROPERTY_MIDI_DEVICE_TYPE_INFO, MidiDeviceInfo.TYPE_USB) == MidiDeviceInfo.TYPE_USB ||
-            info.type == MidiDeviceInfo.TYPE_USB
+        info.type == MidiDeviceInfo.TYPE_USB ||
+            info.properties.getParcelable<UsbDevice>(MidiDeviceInfo.PROPERTY_USB_DEVICE) != null
 
     // ---- Capacitor-exposed methods -------------------------------------------------
 
