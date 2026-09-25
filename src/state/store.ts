@@ -19,7 +19,7 @@ function defaultState(): AppState {
     activePageId: page.id,
     activePatchId: null,
     grid: { portraitColumns: 3, landscapeColumns: 5 },
-    midiSettings: { sendBankSelect: true, sendProgramChange: true, messageOrder: 'msb-lsb-pc', toneSwitchMethod: 'sysex' },
+    midiSettings: { sendBankSelect: true, sendProgramChange: true, messageOrder: 'msb-lsb-pc', toneSwitchMethod: 'cc' },
     performanceMode: false,
     selectedDeviceProfileId: 'roland-xp30',
   };
@@ -35,10 +35,18 @@ function loadState(): AppState {
     // toneSwitchMethod added with the SysEx switch engine).
     if (!parsed.pages || !parsed.patches) return defaultState();
     const base = defaultState();
+    const savedMidi = parsed.midiSettings;
     return {
       ...base,
       ...parsed,
-      midiSettings: { ...base.midiSettings, ...parsed.midiSettings },
+      midiSettings: {
+        ...base.midiSettings,
+        ...savedMidi,
+        // Builds that shipped 'sysex' as the default forced it on everyone;
+        // unless the user deliberately picked a method in Settings, land on
+        // the classic CC#0/#32/PC path (never performance-bank MSB 85).
+        toneSwitchMethod: savedMidi?.toneSwitchPicked ? savedMidi.toneSwitchMethod : 'cc',
+      },
     };
   } catch {
     return defaultState();

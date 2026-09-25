@@ -59,20 +59,24 @@ export function SettingsPanel({
           </button>
         </div>
         <div className="settings-row">
-          <span>SysEx tone switch (XPS-30)</span>
+          <span>SysEx tone switch (experimental)</span>
           <button
-            className={`switch ${midiSettings.toneSwitchMethod !== 'cc' ? 'on' : ''}`}
+            className={`switch ${midiSettings.toneSwitchMethod === 'sysex' ? 'on' : ''}`}
             onClick={() =>
-              onMidiSettingsChange({ toneSwitchMethod: midiSettings.toneSwitchMethod !== 'cc' ? 'cc' : 'sysex' })
+              onMidiSettingsChange({
+                toneSwitchMethod: midiSettings.toneSwitchMethod === 'sysex' ? 'cc' : 'sysex',
+                toneSwitchPicked: true,
+              })
             }
           >
             <span className="knob" />
           </button>
         </div>
         <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10 }}>
-          ON: one All Notes Off, then a Roland SysEx write straight to Performance Part n's
-          patch assignment — works even when the Performance ignores Bank Select / Program Change,
-          and keeps every Part-level adjustment. OFF: classic CC#0 → CC#32 → Program Change.
+          OFF (recommended): classic CC#0 → CC#32 → Program Change on the patch's channel —
+          MSB 87 + LSB 64–75 (PRST) / 0–1 (USER) / 121 (GM), never performance-bank MSB 85,
+          so no starred dual tone. ON: experimental Roland SysEx write straight to
+          Performance Part n's patch assignment (device ID 17).
         </p>
         <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10 }}>
           Message order is fixed in V1: Bank MSB → Bank LSB → Program Change.

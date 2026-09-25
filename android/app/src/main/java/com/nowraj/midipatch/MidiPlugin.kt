@@ -62,7 +62,7 @@ class MidiPlugin : Plugin() {
     private fun registerDeviceCallback() {
         midiManager.registerDeviceCallback(object : MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device: MidiDeviceInfo) {
-                if (connectedDeviceInfo == null && isUsbMidiDevice(device)) {
+                if (connectedDeviceInfo == null && isUsbMidiDevice(device) && device.inputPortCount > 0) {
                     openDevice(device)
                 }
             }
@@ -93,7 +93,13 @@ class MidiPlugin : Plugin() {
             call.resolve(JSObject().put("granted", false))
             return
         }
-        val target = usbDevices.first() // V1: first attached USB device; refine with a
+        // Prefer the first USB device that actually exposes a MIDI interface —
+        // phones with hubs/audio gadgets attached can list a non-MIDI device first.
+        val target = usbDevices.firstOrNull { usb ->
+            midiManager.getDevices().any { info ->
+                info.properties.getParcelable<UsbDevice>(MidiDeviceInfo.PROPERTY_USB_DEVICE)?.deviceId == usb.deviceId
+            }
+        } ?: usbDevices.first() // V1: first attached USB device; refine with a
         // picker UI once multi-interface setups are common.
         if (usbManager.hasPermission(target)) {
             findAndOpenMatchingMidiDevice(target, call)
@@ -114,6 +120,11 @@ class MidiPlugin : Plugin() {
     fun sendPatch(call: PluginCall) {
         val port = inputPort
         if (port == null) {
+            // The UI believed it was connected but the port never opened (or
+            // died mid-session) — that produced "No MIDI device connected"
+            // while the status pill still showed the device name. Kick a
+            // silent reopen so the next tap can succeed.
+            connectedDeviceInfo?.let { openDevice(it) }
             call.resolve(JSObject().put("ok", false).put("raw", JSArray()))
             return
         }
@@ -206,12 +217,18 @@ class MidiPlugin : Plugin() {
     }
 
     private fun findAndOpenMatchingMidiDevice(usbDevice: UsbDevice, call: PluginCall) {
-        midiManager.getDevices().firstOrNull { info ->
+        val candidates = midiManager.getDevices().filter { info ->
             info.properties.getParcelable<UsbDevice>(MidiDeviceInfo.PROPERTY_USB_DEVICE)?.deviceId == usbDevice.deviceId
-        }?.let { info ->
+        }
+        // Prefer an interface that actually has input ports (the port you
+        // write notes/patch data into); some devices enumerate several.
+        val info = candidates.firstOrNull { it.inputPortCount > 0 } ?: candidates.firstOrNull()
+        if (info != null) {
             openDevice(info)
             call.resolve(JSObject().put("granted", true))
-        } ?: call.resolve(JSObject().put("granted", false))
+        } else {
+            call.resolve(JSObject().put("granted", false))
+        }
     }
 
     private fun openDevice(info: MidiDeviceInfo) {
@@ -220,9 +237,23 @@ class MidiPlugin : Plugin() {
                 emitConnectionChange("disconnected", null)
                 return@openDevice
             }
-            // Port 0: fine for single-port USB MIDI interfaces (the common case here).
-            // Multi-port interfaces would need a port picker in Settings.
-            inputPort = device.openInputPort(0)
+            inputPort?.close()
+            inputPort = null
+            // Port 0 isn't guaranteed to be the port that reaches the sound
+            // module — try every input port, and only report "connected" when
+            // one actually opened. (The old code marked connected with a null
+            // port, so sends failed while the UI showed the device name.)
+            var port: MidiInputPort? = null
+            for (i in 0 until info.inputPortCount) {
+                port = device.openInputPort(i)
+                if (port != null) break
+            }
+            if (port == null) {
+                connectedDeviceInfo = null
+                emitConnectionChange("disconnected", null)
+                return@openDevice
+            }
+            inputPort = port
             connectedDeviceInfo = info
             emitConnectionChange("connected", info)
         }, null)
