@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# Build output (regenerated in CI by `npm run build`)
+dist/
+
+# The android/ folder MUST be committed — CI builds the patched version.
+# Do not add android/ here.

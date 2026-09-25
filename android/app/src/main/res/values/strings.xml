@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MIDI Patch</string>
+    <string name="title_activity_main">MIDI Patch</string>
+    <string name="package_name">com.nowraj.midipatch</string>
+    <string name="custom_url_scheme">com.nowraj.midipatch</string>
+</resources>
