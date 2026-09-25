@@ -161,6 +161,28 @@ class MidiPlugin : Plugin() {
         }
     }
 
+    @PluginMethod
+    fun sendRaw(call: PluginCall) {
+        // Prebuilt raw MIDI bytes from JS (e.g. CC 123 + a Roland DT1 SysEx
+        // frame for the Performance Part patch-assignment write). Byte packing
+        // lives JS-side; the port write stays one native call.
+        val port = inputPort
+        val bytes = call.getArray("bytes")
+        if (port == null || bytes == null || bytes.length() == 0) {
+            call.resolve(JSObject().put("ok", false))
+            return
+        }
+        val len = bytes.length()
+        val buffer = ByteArray(len)
+        for (i in 0 until len) buffer[i] = bytes.getInt(i).toByte()
+        try {
+            port.send(buffer, 0, len)
+            call.resolve(JSObject().put("ok", true))
+        } catch (e: Exception) {
+            call.resolve(JSObject().put("ok", false))
+        }
+    }
+
     // ---- USB permission + device opening ---------------------------------------------
 
     private fun requestUsbPermission(device: UsbDevice, call: PluginCall) {

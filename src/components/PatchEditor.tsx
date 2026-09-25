@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { PadAccentColor, Patch } from '../types';
-import { midiBridge } from '../midi/MidiBridge';
+import type { MidiSettings, PadAccentColor, Patch } from '../types';
+import { applyToneSwitch } from '../midi/toneSwitch';
 import { describePatchOrigin } from '../data/xp30';
 
 const COLORS: PadAccentColor[] = ['blue', 'green', 'orange', 'purple', 'red', 'teal', 'yellow', 'gray'];
@@ -16,7 +16,7 @@ export function PatchEditor({
   onDelete,
 }: {
   draft: Draft;
-  midiSettings: { sendBankSelect: boolean; sendProgramChange: boolean };
+  midiSettings: MidiSettings;
   onCancel: () => void;
   onSave: (patch: Draft) => void;
   onDelete?: () => void;
@@ -32,18 +32,23 @@ export function PatchEditor({
 
   const test = async () => {
     setTestResult('Sending…');
-    const res = await midiBridge.sendPatch({
-      channel: form.values.channel,
-      bankMSB: form.values.bankMSB,
-      bankLSB: form.values.bankLSB,
-      program: form.values.program,
-      sendBankSelect: midiSettings.sendBankSelect,
-      sendProgramChange: midiSettings.sendProgramChange,
-    });
+    const res = await applyToneSwitch(
+      {
+        channel: form.values.channel,
+        bankMSB: form.values.bankMSB,
+        bankLSB: form.values.bankLSB,
+        program: form.values.program,
+        sendBankSelect: midiSettings.sendBankSelect,
+        sendProgramChange: midiSettings.sendProgramChange,
+      },
+      midiSettings
+    );
     const identity = describePatchOrigin(form.origin);
     const location = `CH ${form.values.channel} · Bank ${form.values.bankMSB ?? '—'}/${form.values.bankLSB ?? '—'} · PC ${form.values.program}`;
     setTestResult(
-      res.ok ? `Sent — ${identity} (${location})\n${res.raw.join('  ')}` : 'No MIDI device connected'
+      res.ok
+        ? `${res.method === 'sysex' ? 'Sent (SysEx Part write)' : 'Sent'} — ${identity} (${location})\n${res.raw.join('  ')}`
+        : 'No MIDI device connected'
     );
   };
 

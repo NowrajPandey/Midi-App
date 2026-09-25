@@ -58,6 +58,22 @@ export function SettingsPanel({
             <span className="knob" />
           </button>
         </div>
+        <div className="settings-row">
+          <span>SysEx tone switch (XPS-30)</span>
+          <button
+            className={`switch ${midiSettings.toneSwitchMethod !== 'cc' ? 'on' : ''}`}
+            onClick={() =>
+              onMidiSettingsChange({ toneSwitchMethod: midiSettings.toneSwitchMethod !== 'cc' ? 'cc' : 'sysex' })
+            }
+          >
+            <span className="knob" />
+          </button>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10 }}>
+          ON: one All Notes Off, then a Roland SysEx write straight to Performance Part n's
+          patch assignment — works even when the Performance ignores Bank Select / Program Change,
+          and keeps every Part-level adjustment. OFF: classic CC#0 → CC#32 → Program Change.
+        </p>
         <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10 }}>
           Message order is fixed in V1: Bank MSB → Bank LSB → Program Change.
         </p>

@@ -19,7 +19,7 @@ function defaultState(): AppState {
     activePageId: page.id,
     activePatchId: null,
     grid: { portraitColumns: 3, landscapeColumns: 5 },
-    midiSettings: { sendBankSelect: true, sendProgramChange: true, messageOrder: 'msb-lsb-pc' },
+    midiSettings: { sendBankSelect: true, sendProgramChange: true, messageOrder: 'msb-lsb-pc', toneSwitchMethod: 'sysex' },
     performanceMode: false,
     selectedDeviceProfileId: 'roland-xp30',
   };
@@ -30,9 +30,16 @@ function loadState(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw) as AppState;
-    // Minimal shape guard so a corrupted/old blob never crashes the app.
+    // Minimal shape guard so a corrupted/old blob never crashes the app, and
+    // older saved state picks up newly-added settings defaults (e.g.
+    // toneSwitchMethod added with the SysEx switch engine).
     if (!parsed.pages || !parsed.patches) return defaultState();
-    return parsed;
+    const base = defaultState();
+    return {
+      ...base,
+      ...parsed,
+      midiSettings: { ...base.midiSettings, ...parsed.midiSettings },
+    };
   } catch {
     return defaultState();
   }

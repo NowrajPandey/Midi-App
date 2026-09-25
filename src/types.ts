@@ -60,6 +60,10 @@ export interface MidiSettings {
   sendBankSelect: boolean;
   sendProgramChange: boolean;
   messageOrder: 'msb-lsb-pc'; // room to grow later; only one order in V1
+  /** How the app changes tone: 'sysex' writes the XPS-30 Performance Part's
+   * patch-assignment fields via Roland DT1 (default); 'cc' sends classic
+   * CC#0/#32 + Program Change. */
+  toneSwitchMethod: 'sysex' | 'cc';
 }
 
 export interface AppState {

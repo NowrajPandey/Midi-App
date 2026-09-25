@@ -3,6 +3,7 @@ import type { MidiConnectionState, MidiDeviceInfo, MidiOutMessageLog, Patch } fr
 import { deviceProfiles, describePatchOrigin } from './data/xp30';
 import { DispatchContext, StateContext, useRootStore } from './state/store';
 import { midiBridge, buildMonitorEntry } from './midi/MidiBridge';
+import { applyToneSwitch } from './midi/toneSwitch';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { PageTabs } from './components/PageTabs';
 import { PadGrid } from './components/PadGrid';
@@ -59,14 +60,17 @@ export default function App() {
 
   const sendToInstrument = async (patch: Patch) => {
     dispatch({ type: 'SET_ACTIVE_PATCH', patchId: patch.id });
-    const res = await midiBridge.sendPatch({
-      channel: patch.values.channel,
-      bankMSB: patch.values.bankMSB,
-      bankLSB: patch.values.bankLSB,
-      program: patch.values.program,
-      sendBankSelect: state.midiSettings.sendBankSelect,
-      sendProgramChange: state.midiSettings.sendProgramChange,
-    });
+    const res = await applyToneSwitch(
+      {
+        channel: patch.values.channel,
+        bankMSB: patch.values.bankMSB,
+        bankLSB: patch.values.bankLSB,
+        program: patch.values.program,
+        sendBankSelect: state.midiSettings.sendBankSelect,
+        sendProgramChange: state.midiSettings.sendProgramChange,
+      },
+      state.midiSettings
+    );
     if (res.ok) {
       const bankLabel = describePatchOrigin(patch.origin);
       setMonitorLog((log) =>

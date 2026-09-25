@@ -20,6 +20,8 @@ export interface MidiPatchNativePlugin {
     sendBankSelect: boolean;
     sendProgramChange: boolean;
   }): Promise<{ ok: boolean; raw: string[] }>;
+  /** Send a prebuilt raw MIDI byte sequence (e.g. CC 123 + Roland DT1 SysEx). */
+  sendRaw(bytes: number[]): Promise<{ ok: boolean }>;
   addListener(
     eventName: 'connectionChange',
     listenerFunc: (data: { state: MidiConnectionState; device: MidiDeviceInfo | null }) => void
@@ -42,7 +44,7 @@ class WebMidiFallback {
 
   async requestDevice() {
     if (!('requestMIDIAccess' in navigator)) return { granted: false };
-    const access = await (navigator as any).requestMIDIAccess({ sysex: false });
+    const access = await (navigator as any).requestMIDIAccess({ sysex: true });
     const first = Array.from(access.outputs.values())[0] as any | undefined;
     if (first) {
       this.output = first;
@@ -78,6 +80,12 @@ class WebMidiFallback {
     return { ok: true, raw };
   }
 
+  async sendRaw(bytes: number[]) {
+    if (!this.output || bytes.length === 0) return { ok: false };
+    this.output.send(bytes);
+    return { ok: true };
+  }
+
   addListener(_e: 'connectionChange', fn: (d: any) => void) {
     const wrapped = (s: MidiConnectionState, d: MidiDeviceInfo | null) => fn({ state: s, device: d });
     this.listeners.push(wrapped);
@@ -99,6 +107,8 @@ export const midiBridge = {
   getStatus: () => (isNative ? NativeMidiPatch.getStatus() : webFallback.getStatus()),
   sendPatch: (options: Parameters<MidiPatchNativePlugin['sendPatch']>[0]) =>
     isNative ? NativeMidiPatch.sendPatch(options) : webFallback.sendPatch(options),
+  sendRaw: (bytes: number[]) =>
+    isNative ? NativeMidiPatch.sendRaw(bytes) : webFallback.sendRaw(bytes),
   addListener: (fn: (data: { state: MidiConnectionState; device: MidiDeviceInfo | null }) => void) =>
     isNative
       ? NativeMidiPatch.addListener('connectionChange', fn)
