@@ -18,6 +18,9 @@ export type PadAccentColor =
   | 'yellow'
   | 'gray';
 
+/** Which XPS-30 list a tone comes from (matches the panel's bank field). */
+export type Xps30Bank = 'prst' | 'gm' | 'user' | 'drum-prst' | 'drum-gm';
+
 export interface PadAppearance {
   icon: string; // an emoji, kept simple + offline (no icon font dependency)
   accentColor: PadAccentColor;
@@ -33,7 +36,9 @@ export interface Patch {
   /** Where this patch came from, purely informational / for editing UX. */
   origin:
     | { type: 'custom' }
-    | { type: 'device-library'; deviceId: string; bankId: string; program: number };
+    | { type: 'device-library'; deviceId: string; bankId: string; program: number }
+    /** Picked via the XPS-30 Category + Tone Number picker, e.g. "Pf 501". */
+    | { type: 'xps30-tone'; bank: Xps30Bank; code: string; number: number };
   createdAt: number;
   updatedAt: number;
 }
@@ -79,6 +84,14 @@ export interface DeviceBank {
   bankMSB: number | null;
   bankLSB: number | null;
   programCount: number; // how many patches (1..programCount) live in this bank
+  /**
+   * When a bank's on-panel numbering does not start at 1 (XPS-30 USER patches
+   * are numbered 501-756, PRST patches 0001-1472 across sub-banks), this is the
+   * number the first program of the bank shows on the panel. The MIDI Program
+   * Change is still `1..programCount`; display uses `programBase + program - 1`.
+   * Omitted = panel numbers equal program numbers (starting at 1).
+   */
+  programBase?: number;
   /** Optional human-readable names for specific program numbers. */
   programNames?: Record<number, string>;
 }
